@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Ventana Principal COMPLETA del Analizador Léxico
-CON botón de conexión de robot
+CON botón de conexión de robot Y delay solo en movimientos
 """
 
 import os
@@ -121,11 +121,13 @@ class AnalysisThread(QThread):
     
     analysis_finished = pyqtSignal(str, bool)  # resultado, éxito
     robot_command = pyqtSignal(str, dict)      # comando, parámetros
+    cuadruplos_ready = pyqtSignal(list)        # cuádruplos para ejecutar
     
-    def __init__(self, codigo, robodk_enabled=False):
+    def __init__(self, codigo, robodk_enabled=False, ventana_principal=None):
         super().__init__()
         self.codigo = codigo
         self.robodk_enabled = robodk_enabled
+        self.ventana_principal = ventana_principal
         self.analizador = AnalizadorLexico()
         
     def run(self):
@@ -133,16 +135,9 @@ class AnalysisThread(QThread):
             resultado = self.analizador.analizar(self.codigo)
             
             # Si el análisis fue exitoso y RoboDK está habilitado
-            if resultado['exito'] and self.robodk_enabled:
-                # Emitir comandos para el robot
-                for cuadruplo in resultado.get('cuadruplos', []):
-                    if cuadruplo['operador'] == 'CALL':
-                        comando = {
-                            'robot_id': cuadruplo['operando1'],
-                            'componente': cuadruplo['resultado'],
-                            'valor': int(cuadruplo['operando2'])
-                        }
-                        self.robot_command.emit('mover_componente', comando)
+            if resultado['exito'] and self.robodk_enabled and self.ventana_principal:
+                # Emitir señal con los cuádruplos para ejecutar en el hilo principal
+                self.cuadruplos_ready.emit(resultado.get('cuadruplos', []))
             
             self.analysis_finished.emit(resultado['salida'], resultado['exito'])
             
@@ -151,7 +146,7 @@ class AnalysisThread(QThread):
             self.analysis_finished.emit(error_msg, False)
 
 class VentanaPrincipal(QMainWindow):
-    """Ventana principal de la aplicación CON botón de robot"""
+    """Ventana principal de la aplicación CON botón de robot Y delay solo en movimientos"""
     
     def __init__(self):
         super().__init__()
@@ -245,17 +240,15 @@ class VentanaPrincipal(QMainWindow):
         # Editor de código
         self.editor_codigo = CodeEditor()
         self.editor_codigo.setPlaceholderText(
-            "Ingresa tu código aquí...\\n\\n"
-            "Ejemplo:\\n"
-            "Robot ROBOT1\\n"
-            "ROBOT1.base = 90\\n"
-            "ROBOT1.hombro = 45\\n"
-            "ROBOT1.codo = 60\\n"
-            "ROBOT1.garra = 30\\n"
-            "ROBOT1.velocidad = 25\\n"
-            "ROBOT1.repetir = 3 {\\n"
-            "    ROBOT1.base = 180\\n"
-            "    ROBOT1.garra = 0\\n"
+            "Ingresa tu código aquí...\n\n"
+            "Ejemplo:\n"
+            "Robot ROBOT1\n"
+            "ROBOT1.velocidad = 5   # 5 segundos por movimiento\n"
+            "ROBOT1.base = 90\n"
+            "ROBOT1.garra = 30\n"
+            "ROBOT1.repetir = 3 {\n"
+            "    ROBOT1.base = 180\n"
+            "    ROBOT1.garra = 0\n"
             "}"
         )
         layout.addWidget(self.editor_codigo)
@@ -308,15 +301,15 @@ class VentanaPrincipal(QMainWindow):
                     self.btn_conectar_robot.setStyleSheet("background-color: #28a745; color: white;")
                     self.btn_conectar_robot.setEnabled(True)
                     self.statusBar().showMessage("✅ Robot conectado exitosamente")
-                    QMessageBox.information(self, "Éxito", "Robot conectado correctamente\\nAhora puedes analizar código y se ejecutará en RoboDK")
+                    QMessageBox.information(self, "Éxito", "Robot conectado correctamente\nAhora puedes analizar código y se ejecutará en RoboDK")
                 else:
                     self.btn_conectar_robot.setText("🤖 Conectar Robot")
                     self.btn_conectar_robot.setEnabled(True)
                     QMessageBox.warning(self, "Error de Conexión", 
-                                      "No se pudo conectar al robot\\n\\n"
-                                      "Verifica que:\\n"
-                                      "1. RoboDK esté ejecutándose\\n"
-                                      "2. Tengas un robot ABB IRB 120 cargado\\n"
+                                      "No se pudo conectar al robot\n\n"
+                                      "Verifica que:\n"
+                                      "1. RoboDK esté ejecutándose\n"
+                                      "2. Tengas un robot ABB IRB 120 cargado\n"
                                       "3. Ejecuta: python test_robodk_fixed.py")
             else:
                 # Desconectar
@@ -329,7 +322,7 @@ class VentanaPrincipal(QMainWindow):
             self.btn_conectar_robot.setText("🤖 Conectar Robot")
             self.btn_conectar_robot.setStyleSheet("")
             self.btn_conectar_robot.setEnabled(True)
-            QMessageBox.critical(self, "Error", f"Error con conexión del robot:\\n{e}")
+            QMessageBox.critical(self, "Error", f"Error con conexión del robot:\n{e}")
             
     def cargar_archivo(self):
         """Cargar archivo de código"""
@@ -381,11 +374,12 @@ class VentanaPrincipal(QMainWindow):
         self.btn_analizar.setText("⏳ Analizando...")
         self.statusBar().showMessage("Analizando código...")
         
-        # Crear y ejecutar hilo de análisis
+        # Crear y ejecutar hilo de análisis - PASAR REFERENCIA A SELF
         robodk_enabled = self.robot_controller and self.robot_controller.conectado
-        self.analysis_thread = AnalysisThread(codigo, robodk_enabled)
+        self.analysis_thread = AnalysisThread(codigo, robodk_enabled, self)
         self.analysis_thread.analysis_finished.connect(self.on_analysis_finished)
         self.analysis_thread.robot_command.connect(self.ejecutar_comando_robot)
+        self.analysis_thread.cuadruplos_ready.connect(self._ejecutar_cuadruplos_en_robot)
         self.analysis_thread.start()
         
     def on_analysis_finished(self, resultado, exito):
@@ -402,7 +396,104 @@ class VentanaPrincipal(QMainWindow):
                 self.statusBar().showMessage("✅ Análisis completado - Comandos enviados al robot")
         else:
             self.statusBar().showMessage("❌ Análisis completado con errores")
-            
+
+    
+    def _ejecutar_cuadruplos_en_robot(self, cuadruplos):
+        """Ejecuta cuádruplos en el robot - DELAY POR ARTICULACIÓN (también en bucles)"""
+        print("🔧 Aplicando configuraciones iniciales...")
+
+        delay_global = 5  # Valor por defecto
+        delay_por_articulacion = {}  # Dict para cada articulación
+        movimientos = []
+
+        # --- PRIMERA PASADA: movimientos fuera de bucles ---
+        i = 0
+        while i < len(cuadruplos):
+            cuadruplo = cuadruplos[i]
+            if cuadruplo['operador'] == 'BEGIN_LOOP':
+                # Saltar el bloque del bucle
+                while i < len(cuadruplos) and cuadruplos[i]['operador'] != 'END_LOOP':
+                    i += 1
+                i += 1  # Saltar END_LOOP
+                continue
+            if cuadruplo['operador'] == 'CALL' and cuadruplo['resultado'] == 'velocidad':
+                try:
+                    delay_global = int(cuadruplo['operando2'])
+                    print(f"⚡ Cambiando delay global a: {delay_global}s")
+                except Exception:
+                    delay_global = 5
+            elif cuadruplo['operador'] == 'CALL' and cuadruplo['resultado'] != 'velocidad':
+                articulacion = cuadruplo['resultado']
+                valor = int(cuadruplo['operando2'])
+                # Asigna el delay global actual SOLO si es la PRIMERA VEZ que se mueve esa articulación
+                delay_por_articulacion[articulacion] = delay_global  # Siempre actualiza el delay de la articulación
+                movimientos.append({
+                    'componente': articulacion,
+                    'valor': valor,
+                    'delay': delay_por_articulacion[articulacion]
+                })
+            i += 1
+
+        # --- SEGUNDA PASADA: bucles ---
+        i = 0
+        while i < len(cuadruplos):
+            cuadruplo = cuadruplos[i]
+            if cuadruplo['operador'] == 'BEGIN_LOOP':
+                repeticiones = int(cuadruplo['operando1'])
+                loop_id = cuadruplo['resultado']
+                print(f"🔁 Iniciando bucle {loop_id} con {repeticiones} repeticiones")
+                comandos_bucle = []
+                delay_bucle_global = delay_global
+                delay_bucle_por_articulacion = delay_por_articulacion.copy()
+                j = i + 1
+                while j < len(cuadruplos):
+                    if cuadruplos[j]['operador'] == 'CALL' and cuadruplos[j]['resultado'] == 'velocidad':
+                        try:
+                            delay_bucle_global = int(cuadruplos[j]['operando2'])
+                            print(f"⚡ Cambiando delay dentro de bucle a: {delay_bucle_global}s")
+                        except Exception:
+                            delay_bucle_global = delay_bucle_global
+                    elif cuadruplos[j]['operador'] == 'CALL' and cuadruplos[j]['resultado'] != 'velocidad':
+                        articulacion = cuadruplos[j]['resultado']
+                        valor = int(cuadruplos[j]['operando2'])
+                        if articulacion not in delay_bucle_por_articulacion:
+                            delay_bucle_por_articulacion[articulacion] = delay_bucle_global
+                        comandos_bucle.append({
+                            'componente': articulacion,
+                            'valor': valor,
+                            'delay': delay_bucle_por_articulacion[articulacion]
+                        })
+                    elif cuadruplos[j]['operador'] == 'END_LOOP':
+                        break
+                    j += 1
+                print(f"   Encontrados {len(comandos_bucle)} comandos de movimiento en el bucle")
+                # Ejecutar el bucle completo
+                for rep in range(repeticiones):
+                    print(f"   🔄 Repetición {rep + 1}/{repeticiones}")
+                    for mov in comandos_bucle:
+                        print(f"      Comando {mov['componente']} = {mov['valor']} con delay {mov['delay']}s")
+                        self.robot_controller.mover_componente('velocidad', mov['delay'])
+                        self.robot_controller.mover_componente(mov['componente'], mov['valor'])
+                    # Pausa entre repeticiones (fija)
+                    if rep < repeticiones - 1:
+                        print(f"   ⏸️ Pausa entre repeticiones... (faltan {repeticiones - rep - 1})")
+                        import time
+                        time.sleep(0.8)
+                    else:
+                        print(f"   ✅ Última repetición completada")
+                print(f"✅ Bucle {loop_id} completado - Total ejecutado: {repeticiones} veces")
+                i = j + 1
+            else:
+                i += 1
+
+        # --- Ejecutar movimientos fuera de bucles ---
+        if movimientos:
+            print("🔍 Ejecutando movimientos individuales con delay por articulación")
+            for mov in movimientos:
+                print(f"🤖 Ejecutando {mov['componente']} = {mov['valor']} con delay {mov['delay']}s")
+                self.robot_controller.mover_componente('velocidad', mov['delay'])
+                self.robot_controller.mover_componente(mov['componente'], mov['valor'])
+                   
     def ejecutar_comando_robot(self, comando, parametros):
         """Ejecutar comando en el robot real"""
         if self.robot_controller and self.robot_controller.conectado:
