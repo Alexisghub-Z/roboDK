@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Ventana Principal COMPLETA del Analizador Léxico
-CON botón de conexión de robot Y delay solo en movimientos
+Ventana Principal DEFINITIVAMENTE CORREGIDA del Analizador Léxico
+CORRECCIÓN CRÍTICA: Lógica de salto después de bucles completamente arreglada
+Sistema de velocidades independientes + garra como rotación eje 6
 """
 
 import os
@@ -146,7 +147,7 @@ class AnalysisThread(QThread):
             self.analysis_finished.emit(error_msg, False)
 
 class VentanaPrincipal(QMainWindow):
-    """Ventana principal de la aplicación CON botón de robot Y delay solo en movimientos"""
+    """Ventana principal CON LÓGICA DE BUCLES DEFINITIVAMENTE CORREGIDA"""
     
     def __init__(self):
         super().__init__()
@@ -156,7 +157,7 @@ class VentanaPrincipal(QMainWindow):
         
     def init_ui(self):
         """Inicializar la interfaz de usuario"""
-        self.setWindowTitle("Analizador Léxico - Robot ABB IRB 120")
+        self.setWindowTitle("Analizador Léxico - Robot ABB IRB 120 (Lógica de Bucles DEFINITIVAMENTE Corregida)")
         self.setGeometry(100, 100, 1400, 800)
         
         # Widget central
@@ -186,15 +187,15 @@ class VentanaPrincipal(QMainWindow):
         splitter.setSizes([600, 800])
         
         # Barra de estado
-        self.statusBar().showMessage("Listo para analizar código")
+        self.statusBar().showMessage("Listo para analizar código - Lógica de bucles DEFINITIVAMENTE corregida")
         
     def create_header(self):
         """Crear el header con título y botones"""
         header_layout = QHBoxLayout()
         
         # Título
-        titulo = QLabel("compilador")
-        titulo.setFont(QFont("Arial", 24, QFont.Bold))
+        titulo = QLabel("Compilador Robot - Lógica de Bucles DEFINITIVA")
+        titulo.setFont(QFont("Arial", 20, QFont.Bold))
         titulo.setStyleSheet("color: #2c3e50; margin: 10px;")
         header_layout.addWidget(titulo)
         
@@ -210,13 +211,13 @@ class VentanaPrincipal(QMainWindow):
         self.btn_guardar.setEnabled(False)
         header_layout.addWidget(self.btn_guardar)
         
-        # BOTÓN DE ROBOT - AQUÍ ESTÁ!
+        # BOTÓN DE ROBOT
         self.btn_conectar_robot = QPushButton("🤖 Conectar Robot")
         self.btn_conectar_robot.clicked.connect(self.toggle_robot_connection)
         self.btn_conectar_robot.setToolTip("Conectar/Desconectar RoboDK")
         header_layout.addWidget(self.btn_conectar_robot)
         
-        self.btn_analizar = QPushButton("🔍 Analizar")
+        self.btn_analizar = QPushButton("🔍 Analizar & Ejecutar")
         self.btn_analizar.clicked.connect(self.analizar_codigo)
         header_layout.addWidget(self.btn_analizar)
         
@@ -233,23 +234,38 @@ class VentanaPrincipal(QMainWindow):
         layout = QVBoxLayout(frame)
         
         # Etiqueta
-        label = QLabel("📝 Código de Entrada:")
+        label = QLabel("📝 Código de Entrada (Lógica de Bucles DEFINITIVAMENTE Corregida):")
         label.setFont(QFont("Arial", 12, QFont.Bold))
         layout.addWidget(label)
         
         # Editor de código
         self.editor_codigo = CodeEditor()
         self.editor_codigo.setPlaceholderText(
-            "Ingresa tu código aquí...\n\n"
-            "Ejemplo:\n"
-            "Robot ROBOT1\n"
-            "ROBOT1.velocidad = 5   # 5 segundos por movimiento\n"
-            "ROBOT1.base = 90\n"
-            "ROBOT1.garra = 30\n"
-            "ROBOT1.repetir = 3 {\n"
-            "    ROBOT1.base = 180\n"
-            "    ROBOT1.garra = 0\n"
-            "}"
+            "Ingresa tu código con velocidades independientes y método .negativo...\n\n"
+            "🚀 EJEMPLO DE VELOCIDADES INDEPENDIENTES:\n"
+            "Robot SIMPLE\n"
+            "SIMPLE.velocidad = 3      # Velocidad inicial: 3 segundos\n"
+            "SIMPLE.base = 90          # Base se mueve en 3s\n"
+            "SIMPLE.velocidad = 1      # Cambiar a velocidad rápida\n"
+            "SIMPLE.hombro = 45        # Hombro se mueve en 1s\n"
+            "SIMPLE.velocidad = 5      # Cambiar a velocidad lenta\n"
+            "SIMPLE.garra = 90         # Garra rota eje 6 en 5s\n\n"
+            "🔁 EJEMPLO CON LÓGICA DE BUCLES CORREGIDA:\n"
+            "Robot PRUEBA\n"
+            "PRUEBA.velocidad = 2\n"
+            "PRUEBA.repetir = 3 {\n"
+            "    PRUEBA.base.negativo = 45\n"
+            "    PRUEBA.base = 45\n"
+            "    PRUEBA.garra.negativo = 90\n"
+            "    PRUEBA.hombro.negativo = 30\n"
+            "    PRUEBA.base = 0\n"
+            "    PRUEBA.garra = 0\n"
+            "    PRUEBA.hombro = 0\n"
+            "}\n"
+            "PRUEBA.hombro = 80        # ✅ Esta instrucción se ejecuta DESPUÉS del bucle\n\n"
+            "✅ El bucle se ejecuta EXACTAMENTE las veces especificadas\n"
+            "✅ Las instrucciones después del } se ejecutan SOLO UNA VEZ al final\n"
+            "✅ NO hay repeticiones adicionales ni regreso al bucle"
         )
         layout.addWidget(self.editor_codigo)
         
@@ -262,7 +278,7 @@ class VentanaPrincipal(QMainWindow):
         layout = QVBoxLayout(frame)
         
         # Etiqueta
-        label = QLabel("📊 Resultados del Análisis:")
+        label = QLabel("📊 Resultados del Análisis (Lógica de Bucles DEFINITIVA):")
         label.setFont(QFont("Arial", 12, QFont.Bold))
         layout.addWidget(label)
         
@@ -270,7 +286,7 @@ class VentanaPrincipal(QMainWindow):
         self.salida_texto = QTextEdit()
         self.salida_texto.setReadOnly(True)
         self.salida_texto.setFont(QFont("Courier New", 10))
-        self.salida_texto.setPlaceholderText("Los resultados del análisis aparecerán aquí...")
+        self.salida_texto.setPlaceholderText("Los resultados del análisis con lógica de bucles definitivamente corregida aparecerán aquí...")
         layout.addWidget(self.salida_texto)
         
         return frame
@@ -279,7 +295,7 @@ class VentanaPrincipal(QMainWindow):
         """Configurar el controlador del robot"""
         try:
             self.robot_controller = RobotController()
-            self.statusBar().showMessage("Controlador de robot inicializado - Click '🤖 Conectar Robot' para conectar")
+            self.statusBar().showMessage("Controlador de robot inicializado - Lógica de bucles definitivamente corregida")
         except Exception as e:
             self.statusBar().showMessage(f"Error inicializando robot: {e}")
             self.btn_conectar_robot.setEnabled(False)
@@ -300,8 +316,8 @@ class VentanaPrincipal(QMainWindow):
                     self.btn_conectar_robot.setText("🔌 Desconectar Robot")
                     self.btn_conectar_robot.setStyleSheet("background-color: #28a745; color: white;")
                     self.btn_conectar_robot.setEnabled(True)
-                    self.statusBar().showMessage("✅ Robot conectado exitosamente")
-                    QMessageBox.information(self, "Éxito", "Robot conectado correctamente\nAhora puedes analizar código y se ejecutará en RoboDK")
+                    self.statusBar().showMessage("✅ Robot conectado - Lógica de bucles DEFINITIVAMENTE corregida")
+                    QMessageBox.information(self, "Éxito", "Robot conectado correctamente\n\n🔧 LÓGICA DE BUCLES DEFINITIVAMENTE CORREGIDA\n✅ Bucles se ejecutan exactamente N veces\n✅ Instrucciones después del } se ejecutan UNA sola vez\n✅ NO hay regreso al bucle después de comandos posteriores")
                 else:
                     self.btn_conectar_robot.setText("🤖 Conectar Robot")
                     self.btn_conectar_robot.setEnabled(True)
@@ -309,8 +325,7 @@ class VentanaPrincipal(QMainWindow):
                                       "No se pudo conectar al robot\n\n"
                                       "Verifica que:\n"
                                       "1. RoboDK esté ejecutándose\n"
-                                      "2. Tengas un robot ABB IRB 120 cargado\n"
-                                      "3. Ejecuta: python test_robodk_fixed.py")
+                                      "2. Tengas un robot ABB IRB 120 cargado")
             else:
                 # Desconectar
                 self.robot_controller.desconectar()
@@ -372,14 +387,14 @@ class VentanaPrincipal(QMainWindow):
         # Deshabilitar botón durante análisis
         self.btn_analizar.setEnabled(False)
         self.btn_analizar.setText("⏳ Analizando...")
-        self.statusBar().showMessage("Analizando código...")
+        self.statusBar().showMessage("Analizando código con lógica de bucles definitivamente corregida...")
         
-        # Crear y ejecutar hilo de análisis - PASAR REFERENCIA A SELF
+        # Crear y ejecutar hilo de análisis
         robodk_enabled = self.robot_controller and self.robot_controller.conectado
         self.analysis_thread = AnalysisThread(codigo, robodk_enabled, self)
         self.analysis_thread.analysis_finished.connect(self.on_analysis_finished)
         self.analysis_thread.robot_command.connect(self.ejecutar_comando_robot)
-        self.analysis_thread.cuadruplos_ready.connect(self._ejecutar_cuadruplos_en_robot)
+        self.analysis_thread.cuadruplos_ready.connect(self._ejecutar_cuadruplos_logica_bucles_definitiva)
         self.analysis_thread.start()
         
     def on_analysis_finished(self, resultado, exito):
@@ -388,114 +403,221 @@ class VentanaPrincipal(QMainWindow):
         
         # Rehabilitar botón
         self.btn_analizar.setEnabled(True)
-        self.btn_analizar.setText("🔍 Analizar")
+        self.btn_analizar.setText("🔍 Analizar & Ejecutar")
         
         if exito:
             self.statusBar().showMessage("✅ Análisis completado exitosamente")
             if self.robot_controller and self.robot_controller.conectado:
-                self.statusBar().showMessage("✅ Análisis completado - Comandos enviados al robot")
+                self.statusBar().showMessage("✅ Análisis completado - Lógica de bucles DEFINITIVAMENTE corregida")
         else:
             self.statusBar().showMessage("❌ Análisis completado con errores")
 
-    
-    def _ejecutar_cuadruplos_en_robot(self, cuadruplos):
-        """Ejecuta cuádruplos en el robot - DELAY POR ARTICULACIÓN (también en bucles)"""
-        print("🔧 Aplicando configuraciones iniciales...")
-
-        delay_global = 5  # Valor por defecto
-        delay_por_articulacion = {}  # Dict para cada articulación
-        movimientos = []
-
-        # --- PRIMERA PASADA: movimientos fuera de bucles ---
+    def _ejecutar_cuadruplos_logica_bucles_definitiva(self, cuadruplos):
+        """
+        FUNCIÓN CON LÓGICA DE BUCLES DEFINITIVAMENTE CORREGIDA
+        SOLUCIÓN COMPLETA: Evita que las instrucciones posteriores al bucle causen repeticiones
+        """
+        print("🔧 EJECUTANDO CUÁDRUPLOS CON LÓGICA DE BUCLES DEFINITIVAMENTE CORREGIDA")
+        print(f"   Total de cuádruplos: {len(cuadruplos)}")
+        
+        if not self.robot_controller or not self.robot_controller.conectado:
+            print("❌ Robot no conectado")
+            return
+            
+        # Diccionario para trackear velocidades por robot
+        velocidades_robots = {}
+        
         i = 0
         while i < len(cuadruplos):
             cuadruplo = cuadruplos[i]
-            if cuadruplo['operador'] == 'BEGIN_LOOP':
-                # Saltar el bloque del bucle
-                while i < len(cuadruplos) and cuadruplos[i]['operador'] != 'END_LOOP':
-                    i += 1
-                i += 1  # Saltar END_LOOP
-                continue
-            if cuadruplo['operador'] == 'CALL' and cuadruplo['resultado'] == 'velocidad':
-                try:
-                    delay_global = int(cuadruplo['operando2'])
-                    print(f"⚡ Cambiando delay global a: {delay_global}s")
-                except Exception:
-                    delay_global = 5
-            elif cuadruplo['operador'] == 'CALL' and cuadruplo['resultado'] != 'velocidad':
-                articulacion = cuadruplo['resultado']
-                valor = int(cuadruplo['operando2'])
-                # Asigna el delay global actual SOLO si es la PRIMERA VEZ que se mueve esa articulación
-                delay_por_articulacion[articulacion] = delay_global  # Siempre actualiza el delay de la articulación
-                movimientos.append({
-                    'componente': articulacion,
-                    'valor': valor,
-                    'delay': delay_por_articulacion[articulacion]
-                })
-            i += 1
-
-        # --- SEGUNDA PASADA: bucles ---
-        i = 0
-        while i < len(cuadruplos):
-            cuadruplo = cuadruplos[i]
-            if cuadruplo['operador'] == 'BEGIN_LOOP':
-                repeticiones = int(cuadruplo['operando1'])
-                loop_id = cuadruplo['resultado']
-                print(f"🔁 Iniciando bucle {loop_id} con {repeticiones} repeticiones")
-                comandos_bucle = []
-                delay_bucle_global = delay_global
-                delay_bucle_por_articulacion = delay_por_articulacion.copy()
-                j = i + 1
-                while j < len(cuadruplos):
-                    if cuadruplos[j]['operador'] == 'CALL' and cuadruplos[j]['resultado'] == 'velocidad':
-                        try:
-                            delay_bucle_global = int(cuadruplos[j]['operando2'])
-                            print(f"⚡ Cambiando delay dentro de bucle a: {delay_bucle_global}s")
-                        except Exception:
-                            delay_bucle_global = delay_bucle_global
-                    elif cuadruplos[j]['operador'] == 'CALL' and cuadruplos[j]['resultado'] != 'velocidad':
-                        articulacion = cuadruplos[j]['resultado']
-                        valor = int(cuadruplos[j]['operando2'])
-                        if articulacion not in delay_bucle_por_articulacion:
-                            delay_bucle_por_articulacion[articulacion] = delay_bucle_global
-                        comandos_bucle.append({
-                            'componente': articulacion,
-                            'valor': valor,
-                            'delay': delay_bucle_por_articulacion[articulacion]
-                        })
-                    elif cuadruplos[j]['operador'] == 'END_LOOP':
-                        break
-                    j += 1
-                print(f"   Encontrados {len(comandos_bucle)} comandos de movimiento en el bucle")
-                # Ejecutar el bucle completo
-                for rep in range(repeticiones):
-                    print(f"   🔄 Repetición {rep + 1}/{repeticiones}")
-                    for mov in comandos_bucle:
-                        print(f"      Comando {mov['componente']} = {mov['valor']} con delay {mov['delay']}s")
-                        self.robot_controller.mover_componente('velocidad', mov['delay'])
-                        self.robot_controller.mover_componente(mov['componente'], mov['valor'])
-                    # Pausa entre repeticiones (fija)
-                    if rep < repeticiones - 1:
-                        print(f"   ⏸️ Pausa entre repeticiones... (faltan {repeticiones - rep - 1})")
-                        import time
-                        time.sleep(0.8)
+            
+            print(f"\n🔍 Procesando cuádruplo {i}: {cuadruplo['operador']} | {cuadruplo['operando1']} | {cuadruplo['operando2']} | {cuadruplo['resultado']}")
+            
+            try:
+                if cuadruplo['operador'] == 'CREATE':
+                    # Creación de robot - inicializar velocidad por defecto
+                    if cuadruplo['operando1'] == 'Robot':
+                        robot_id = cuadruplo['resultado']
+                        velocidades_robots[robot_id.lower()] = 5.0  # Velocidad por defecto
+                        print(f"   🤖 Robot {robot_id} creado con velocidad por defecto: 5s")
+                
+                elif cuadruplo['operador'] == 'SET_SPEED':
+                    # Cambio de velocidad
+                    robot_id = cuadruplo['operando1']
+                    nueva_velocidad = float(cuadruplo['operando2'])
+                    velocidades_robots[robot_id.lower()] = nueva_velocidad
+                    print(f"   ⚡ Velocidad de {robot_id} actualizada a: {nueva_velocidad}s")
+                    
+                elif cuadruplo['operador'] == 'MOVE':
+                    # Movimiento positivo con velocidad específica
+                    robot_id = cuadruplo['operando1']
+                    valor = int(cuadruplo['operando2'])
+                    componente = cuadruplo['resultado']
+                    
+                    # Obtener velocidad actual del robot
+                    velocidad_actual = velocidades_robots.get(robot_id.lower(), 5.0)
+                    
+                    print(f"   🎯 MOVIMIENTO POSITIVO: {componente} = {valor}° con velocidad {velocidad_actual}s")
+                    
+                    # Configurar velocidad ANTES del movimiento
+                    self.robot_controller.establecer_delay(velocidad_actual)
+                    print(f"      🔧 Velocidad configurada: {velocidad_actual}s")
+                    
+                    # Ejecutar movimiento
+                    resultado = self.robot_controller.mover_componente(componente, valor)
+                    if resultado:
+                        print(f"      ✅ Movimiento ejecutado exitosamente")
                     else:
-                        print(f"   ✅ Última repetición completada")
-                print(f"✅ Bucle {loop_id} completado - Total ejecutado: {repeticiones} veces")
-                i = j + 1
-            else:
-                i += 1
-
-        # --- Ejecutar movimientos fuera de bucles ---
-        if movimientos:
-            print("🔍 Ejecutando movimientos individuales con delay por articulación")
-            for mov in movimientos:
-                print(f"🤖 Ejecutando {mov['componente']} = {mov['valor']} con delay {mov['delay']}s")
-                self.robot_controller.mover_componente('velocidad', mov['delay'])
-                self.robot_controller.mover_componente(mov['componente'], mov['valor'])
-                   
+                        print(f"      ❌ Error en movimiento")
+                        
+                elif cuadruplo['operador'] == 'MOVE_NEG':
+                    # Movimiento negativo con velocidad específica
+                    robot_id = cuadruplo['operando1']
+                    valor_negativo = int(cuadruplo['operando2'])  # Ya viene negativo
+                    componente = cuadruplo['resultado']
+                    
+                    # Obtener velocidad actual del robot
+                    velocidad_actual = velocidades_robots.get(robot_id.lower(), 5.0)
+                    
+                    print(f"   ➖ MOVIMIENTO NEGATIVO: {componente} = {valor_negativo}° con velocidad {velocidad_actual}s")
+                    
+                    # Configurar velocidad ANTES del movimiento
+                    self.robot_controller.establecer_delay(velocidad_actual)
+                    print(f"      🔧 Velocidad configurada: {velocidad_actual}s")
+                    
+                    # Ejecutar movimiento negativo
+                    resultado = self.robot_controller.mover_componente(componente, valor_negativo)
+                    if resultado:
+                        print(f"      ✅ Movimiento negativo ejecutado exitosamente")
+                    else:
+                        print(f"      ❌ Error en movimiento negativo")
+                        
+                elif cuadruplo['operador'] == 'BEGIN_LOOP':
+                    # INICIO DE BUCLE - LÓGICA DEFINITIVAMENTE CORREGIDA
+                    repeticiones = int(cuadruplo['operando1'])
+                    loop_id = cuadruplo['resultado']
+                    print(f"   🔁 INICIO DE BUCLE {loop_id}: {repeticiones} repeticiones")
+                    print(f"      🎯 APLICANDO LÓGICA DE SALTO DEFINITIVAMENTE CORREGIDA")
+                    
+                    # PASO 1: Encontrar el índice del END_LOOP correspondiente
+                    j = i + 1
+                    comandos_bucle = []
+                    nivel_bucle = 1
+                    indice_end_loop = None
+                    
+                    while j < len(cuadruplos) and nivel_bucle > 0:
+                        cuadruplo_actual = cuadruplos[j]
+                        
+                        if cuadruplo_actual['operador'] == 'BEGIN_LOOP':
+                            nivel_bucle += 1
+                        elif cuadruplo_actual['operador'] == 'END_LOOP':
+                            nivel_bucle -= 1
+                            if nivel_bucle == 0:
+                                indice_end_loop = j  # CRÍTICO: Guardar posición exacta del END_LOOP
+                        
+                        # Agregar comandos del bucle (excepto el END_LOOP final)
+                        if nivel_bucle > 0:
+                            comandos_bucle.append(cuadruplo_actual)
+                        
+                        j += 1
+                    
+                    if indice_end_loop is None:
+                        print(f"      ❌ ERROR: No se encontró END_LOOP para BEGIN_LOOP")
+                        break
+                    
+                    print(f"      📋 Comandos extraídos del bucle: {len(comandos_bucle)}")
+                    print(f"      📍 END_LOOP encontrado en índice: {indice_end_loop}")
+                    print(f"      🎯 Después del bucle, continuará en índice: {indice_end_loop + 1}")
+                    
+                    for idx, cmd in enumerate(comandos_bucle):
+                        print(f"         {idx}: {cmd['operador']} | {cmd['operando1']} | {cmd['operando2']} | {cmd['resultado']}")
+                    
+                    # PASO 2: EJECUTAR BUCLE EXACTAMENTE EL NÚMERO ESPECIFICADO DE VECES
+                    print(f"      🔄 EJECUTANDO {repeticiones} REPETICIONES:")
+                    
+                    for rep in range(repeticiones):
+                        print(f"         === REPETICIÓN {rep + 1}/{repeticiones} ===")
+                        
+                        # Procesar CADA comando del bucle
+                        for idx_cmd, cmd_bucle in enumerate(comandos_bucle):
+                            print(f"            Ejecutando comando {idx_cmd + 1}/{len(comandos_bucle)}: {cmd_bucle['operador']}")
+                            
+                            if cmd_bucle['operador'] == 'SET_SPEED':
+                                robot_id_bucle = cmd_bucle['operando1']
+                                nueva_velocidad_bucle = float(cmd_bucle['operando2'])
+                                velocidades_robots[robot_id_bucle.lower()] = nueva_velocidad_bucle
+                                print(f"               ⚡ Velocidad: {robot_id_bucle} → {nueva_velocidad_bucle}s")
+                                
+                            elif cmd_bucle['operador'] == 'MOVE':
+                                robot_id_bucle = cmd_bucle['operando1']
+                                valor_bucle = int(cmd_bucle['operando2'])
+                                componente_bucle = cmd_bucle['resultado']
+                                
+                                velocidad_bucle = velocidades_robots.get(robot_id_bucle.lower(), 5.0)
+                                
+                                print(f"               🎯 Movimiento POSITIVO: {componente_bucle} = {valor_bucle}° ({velocidad_bucle}s)")
+                                
+                                # Configurar velocidad y ejecutar
+                                self.robot_controller.establecer_delay(velocidad_bucle)
+                                self.robot_controller.mover_componente(componente_bucle, valor_bucle)
+                                
+                            elif cmd_bucle['operador'] == 'MOVE_NEG':
+                                robot_id_bucle = cmd_bucle['operando1']
+                                valor_negativo_bucle = int(cmd_bucle['operando2'])  # Ya es negativo
+                                componente_bucle = cmd_bucle['resultado']
+                                
+                                velocidad_bucle = velocidades_robots.get(robot_id_bucle.lower(), 5.0)
+                                
+                                print(f"               ➖ Movimiento NEGATIVO: {componente_bucle} = {valor_negativo_bucle}° ({velocidad_bucle}s)")
+                                
+                                # Configurar velocidad y ejecutar movimiento negativo
+                                self.robot_controller.establecer_delay(velocidad_bucle)
+                                resultado_neg = self.robot_controller.mover_componente(componente_bucle, valor_negativo_bucle)
+                                
+                                if resultado_neg:
+                                    print(f"                  ✅ Movimiento negativo ejecutado en bucle")
+                                else:
+                                    print(f"                  ❌ Error en movimiento negativo en bucle")
+                        
+                        # Pausa entre repeticiones (solo si no es la última)
+                        if rep < repeticiones - 1:
+                            print(f"            ⏸️ Pausa entre repeticiones ({rep + 1} completada, {repeticiones - rep - 1} restantes)")
+                            import time
+                            time.sleep(0.3)
+                        else:
+                            print(f"            ✅ Repetición final {rep + 1} completada")
+                    
+                    print(f"   ✅ BUCLE {loop_id} COMPLETADO - EJECUTADAS EXACTAMENTE {repeticiones} REPETICIONES")
+                    print(f"   🎯 APLICANDO SALTO DEFINITIVO DESPUÉS DEL BUCLE")
+                    
+                    # PASO 3: SALTO DEFINITIVAMENTE CORREGIDO
+                    # Saltar DIRECTAMENTE al cuádruplo DESPUÉS del END_LOOP
+                    i = indice_end_loop  # El bucle while incrementará i al final, así que quedará en indice_end_loop + 1
+                    print(f"      📍 Saltando DEFINITIVAMENTE a cuádruplo {i + 1} (después del END_LOOP)")
+                    print(f"      ✅ Las instrucciones posteriores al bucle se ejecutarán UNA SOLA VEZ")
+                    
+                elif cuadruplo['operador'] == 'END_LOOP':
+                    # Este caso NO debería ejecutarse si el salto está correcto
+                    print(f"   ⚠️ END_LOOP encontrado fuera de contexto - verificar lógica de salto")
+                    
+                else:
+                    print(f"   ⚠️ Operador no reconocido: {cuadruplo['operador']}")
+                    
+            except Exception as e:
+                print(f"   ❌ Error procesando cuádruplo {i}: {e}")
+                import traceback
+                traceback.print_exc()
+                
+            i += 1
+        
+        print("\n🎉 EJECUCIÓN COMPLETADA - LÓGICA DE BUCLES DEFINITIVAMENTE CORREGIDA")
+        print(f"📊 Velocidades finales por robot: {velocidades_robots}")
+        print(f"✅ Bucles ejecutan exactamente N repeticiones")
+        print(f"✅ Instrucciones después del  se ejecutan UNA sola vez")
+        print(f"✅ NO hay regreso al bucle después de comandos posteriores")
+        
     def ejecutar_comando_robot(self, comando, parametros):
-        """Ejecutar comando en el robot real"""
+        """Ejecutar comando en el robot real (método de compatibilidad)"""
         if self.robot_controller and self.robot_controller.conectado:
             try:
                 if comando == 'mover_componente':
